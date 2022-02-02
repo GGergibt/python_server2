@@ -24,7 +24,10 @@ text_url = ""
 
 @bot.message_handler(commands=["start", "help"])
 def starting(message):
-    bot.reply_to(message, "send to me youtube link")
+    bot.reply_to(
+        message,
+        "you can download with me:   instagram stories/highlights    youtube video in 1080 or only audio   tiktok profile or tiktok video   to download stories/highlights just send name of instagram profile. remember instagram has no probels. all probels must writing as _  . To download from  youtube, send video''s url. tiktok profile wil be downloaded with name profile, for downloading one video send url. ",
+    )
 
 
 @bot.message_handler(commands=["insta_acs", "tt_acs"])
@@ -99,19 +102,7 @@ def callback_quer(call):
         res = video_downloader(text_url, "bestaudio", "youtube")
         sending_file(res, chat_id)
     elif call.data == "stories":
-        insta_acs = "insta_accounts"
-        text = call.message.text
-        text_name = text.lower().split(" ")[0]
-        print(text_name)
-
-        L = instaloader.Instaloader(dirname_pattern=f"instagram/{text_name}")
-        profile = stories_download(text_name, L)
-        L.download_stories(userids=[profile])
-        send_files_to_telegram(chat_id, text_name, "instagram")
-        i = insert_account_in_database_if_not_exists(
-            cursor, chat_id, text_name, insta_acs
-        )
-        print(i)
+        instaling_and_sending_instagram_profiles(cursor, chat_id, "instagram", call)
     elif call.data == "TT_profile":
         tt_acs = "tt_accounts"
         # print(text_name)
@@ -134,10 +125,7 @@ def callback_quer(call):
         )
 
     elif call.data == "highlights":
-        L = instaloader.Instaloader(dirname_pattern=f"highlights/{text_url}")
-        profile = stories_download(text_url, L)
-        L.download_highlights(profile)
-        send_files_to_telegram(chat_id, text_url, "highlights")
+        instaling_and_sending_instagram_profiles(cursor, chat_id, "highlights", call)
 
 
 def video_response(chat_id, text_url, directory):
@@ -162,6 +150,26 @@ def sending_file(res, chat_id):
     url_bin = types.InlineKeyboardButton(text="Load", url=req, reply_markup=keyboard)
     keyboard.add(url_bin)
     bot.send_message(chat_id, text="Load", reply_markup=keyboard)
+
+
+def instaling_and_sending_instagram_profiles(cursor, chat_id, type_download, call):
+    try:
+        insta_acs = "insta_accounts"
+        text = call.message.text
+        text_name = text.lower().split(" ")[0]
+
+        L = instaloader.Instaloader(dirname_pattern=f"{type_download}/{text_name}")
+        profile = stories_download(text_name, L)
+
+        if "instagram" in type_download:
+            L.download_stories(userids=[profile])
+        else:
+            L.download_highlights(profile)
+
+        send_files_to_telegram(chat_id, text_name, type_download)
+
+    except instaloader.exceptions.ProfileNotExistsException:
+        bot.reply_to(call.message, text="make sure that account actualy exists")
 
 
 def video_downloader(url: str, query_format, folder):
