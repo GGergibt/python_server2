@@ -167,6 +167,7 @@ def instaling_and_sending_instagram_profiles(cursor, chat_id, type_download, cal
             L.download_highlights(profile)
 
         send_files_to_telegram(chat_id, text_name, type_download)
+        insert_account_in_database_if_not_exists(cursor, chat_id, text_name, insta_acs)
 
     except instaloader.exceptions.ProfileNotExistsException:
         bot.reply_to(call.message, text="make sure that account actualy exists")
@@ -189,7 +190,7 @@ def video_downloader(url: str, query_format, folder):
 
 def stories_download(profile: str, L: str):
     L.load_session_from_file(
-        "ffvgd2021", "/home/gosha/.config/instaloader/session-ffvgd2021"
+        "ffvgd2021", "/home/www/.config/instaloader/session-ffvgd2021"
     )
     profile = L.check_profile_id(profile)
 
