@@ -1,19 +1,18 @@
 import telebot
-from telebot import types
 import requests
+from telebot import types
 
 # from youtube_dl import YoutubeDL
-import instaloader
-import os
-import yt_dlp
 
 # from database_requestes import cursor, insert_account_in_database_if_not_exists, selecting_accounts_if_exists
 from database_requests import (
-    cursor,
     selecting_accounts_if_exists,
     insert_account_in_database_if_not_exists,
     selecting_download_count_if_exists,
 )
+from insta_download import instaling_and_sending_instagram_profiles
+
+from sending_files import sending_file, video_downloader, send_files_to_telegram
 
 bot = telebot.TeleBot("1960290392:AAGWTVdvgqrmRxGbZITJ2RkBD5dpIvL4nO8", parse_mode=None)
 
@@ -41,8 +40,8 @@ def starting(message):
         select_column = "tt_accounts"
         callback_data = "TT_profile"
 
-    insta_acs = selecting_accounts_if_exists(cursor, chat_id, select_column)
-    insta_counts = selecting_download_count_if_exists(cursor, chat_id, select_column)
+    insta_acs = selecting_accounts_if_exists(chat_id, select_column)
+    insta_counts = selecting_download_count_if_exists(chat_id, select_column)
 
     download_count = []
     not_none_check = []
@@ -99,10 +98,10 @@ def callback_quer(call):
         sending_file(res, chat_id)
 
     elif call.data == "audio":
-        res = video_downloader(text_url, "bestaudio", "youtube")
-        sending_file(res, chat_id)
+        res = video_downloader(text_url, "bestaudio", "youtube", bot)
+        sending_file(res, chat_id, bot)
     elif call.data == "stories":
-        instaling_and_sending_instagram_profiles(cursor, chat_id, "instagram", call)
+        instaling_and_sending_instagram_profiles(chat_id, "instagram", call)
     elif call.data == "TT_profile":
         tt_acs = "tt_accounts"
         # print(text_name)
@@ -116,7 +115,7 @@ def callback_quer(call):
             chat_id, text_name, "../django_server/django_ggrksok/media/tt_profile"
         )
 
-        i = insert_account_in_database_if_not_exists(cursor, chat_id, text_name, tt_acs)
+        i = insert_account_in_database_if_not_exists(chat_id, text_name, tt_acs)
     elif call.data == "TT":
         res = video_downloader(text_url, best, "tiktok")
         # video_response(chat_id, res, "media/tiktok")
@@ -125,76 +124,7 @@ def callback_quer(call):
         )
 
     elif call.data == "highlights":
-        instaling_and_sending_instagram_profiles(cursor, chat_id, "highlights", call)
-
-
-def video_response(chat_id, text_url, directory):
-    folder = f"./{directory}/{text_url}"
-    bot.send_video(chat_id, open(f"{folder}", "rb"))
-
-
-def send_files_to_telegram(chat_id, text_url, directory):
-    folder = f"./{directory}/{text_url}"
-    print(folder)
-    for r, m, d in os.walk(folder):
-        for file in sorted(d):
-            if ".jpg" in file:
-                bot.send_photo(chat_id, open(f"{folder}/{file}", "rb"))
-            elif ".mp4" in file:
-                bot.send_video(chat_id, open(f"{folder}/{file}", "rb"))
-
-
-def sending_file(res, chat_id):
-    req = f"https://ggrksok.fun/media/youtube/{res}"
-    keyboard = types.InlineKeyboardMarkup()
-    url_bin = types.InlineKeyboardButton(text="Load", url=req, reply_markup=keyboard)
-    keyboard.add(url_bin)
-    bot.send_message(chat_id, text="Load", reply_markup=keyboard)
-
-
-def instaling_and_sending_instagram_profiles(cursor, chat_id, type_download, call):
-    try:
-        insta_acs = "insta_accounts"
-        text = call.message.text
-        text_name = text.lower().split(" ")[0]
-
-        L = instaloader.Instaloader(dirname_pattern=f"{type_download}/{text_name}")
-        profile = stories_download(text_name, L)
-
-        if "instagram" in type_download:
-            L.download_stories(userids=[profile])
-        else:
-            L.download_highlights(profile)
-
-        send_files_to_telegram(chat_id, text_name, type_download)
-        insert_account_in_database_if_not_exists(cursor, chat_id, text_name, insta_acs)
-
-    except instaloader.exceptions.ProfileNotExistsException:
-        bot.reply_to(call.message, text="make sure that account actualy exists")
-
-
-def video_downloader(url: str, query_format, folder):
-    ydl_opts = {
-        "format": query_format,
-        "outtmpl": f"../django_server/django_ggrksok/media/{folder}/%(id)s.%(ext)s",
-        "noplaylist": True,
-        "extract-audio": True,
-    }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info_dict = ydl.extract_info(url, download=True)
-        video_id = info_dict.get("id")
-        video_ext = info_dict.get("ext")
-    file_response = f"{video_id}.{video_ext}"
-    return file_response
-
-
-def stories_download(profile: str, L: str):
-    L.load_session_from_file(
-        "ffvgd2021", "/home/www/.config/instaloader/session-ffvgd2021"
-    )
-    profile = L.check_profile_id(profile)
-
-    return profile
+        instaling_and_sending_instagram_profiles(chat_id, "highlights", call)
 
 
 bot.polling()
