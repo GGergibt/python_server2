@@ -2,6 +2,7 @@ import instaloader
 from database_requests import insert_account_in_database_if_not_exists
 import telebot
 from sending_files import send_files_to_telegram
+from sending_link import stored_profiles_for_user_in_db
 
 bot = telebot.TeleBot("1960290392:AAGWTVdvgqrmRxGbZITJ2RkBD5dpIvL4nO8", parse_mode=None)
 
@@ -21,7 +22,8 @@ def instaling_and_sending_instagram_profiles(chat_id, type_download, call):
             L.download_highlights(profile)
 
         send_files_to_telegram(chat_id, text_name, type_download)
-        insert_account_in_database_if_not_exists(chat_id, text_name, insta_acs)
+        # insert_account_in_database_if_not_exists(chat_id, text_name, insta_acs)
+        stored_profiles_for_user_in_db(chat_id, text_name, insta_acs)
 
     except instaloader.exceptions.ProfileNotExistsException:
         bot.reply_to(call.message, text="make sure that account actualy exists")
@@ -29,7 +31,7 @@ def instaling_and_sending_instagram_profiles(chat_id, type_download, call):
 
 def stories_download(profile: str, L: str):
     L.load_session_from_file(
-        "ffvgd2020", "/home/www/.config/instaloader/session-ffvgd2021"
+        "ffvgd2020", "/home/gosha/.config/instaloader/session-ffvgd2021"
     )
     profile = L.check_profile_id(profile)
 

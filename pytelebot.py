@@ -1,20 +1,24 @@
 import telebot
 import requests
 from telebot import types
+import json
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 # from youtube_dl import YoutubeDL
 
 # from database_requestes import cursor, insert_account_in_database_if_not_exists, selecting_accounts_if_exists
-from database_requests import (
-    selecting_accounts_if_exists,
-    insert_account_in_database_if_not_exists,
-    selecting_download_count_if_exists,
-)
 from insta_download import instaling_and_sending_instagram_profiles
 
 from sending_files import sending_file, video_downloader, send_files_to_telegram
+from sending_link import (
+    youtube_downloader,
+    get_accounts_and_download_count,
+    stored_profiles_for_user_in_db,
+)
 
 bot = telebot.TeleBot("1960290392:AAGWTVdvgqrmRxGbZITJ2RkBD5dpIvL4nO8", parse_mode=None)
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 bestvideo = "best[height<=1080]"
 best = "best"
@@ -40,38 +44,25 @@ def starting(message):
         select_column = "tt_accounts"
         callback_data = "TT_profile"
 
-    insta_acs = selecting_accounts_if_exists(chat_id, select_column)
-    insta_counts = selecting_download_count_if_exists(chat_id, select_column)
-
-    download_count = []
-    not_none_check = []
-    # if insta_acs:
-    for names in insta_counts:
-        for name_account in names:
-            download_count.append(name_account)
-
-    count = -1
-    for insta_profile in insta_acs:
-        for name_account in insta_profile:
-            if name_account != None:
-                count += 1
-                print(count)
-                keyboard = types.InlineKeyboardMarkup()
-                btn_to_download = types.InlineKeyboardButton(
-                    text=name_account, callback_data=callback_data
-                )
-                keyboard.add(btn_to_download)
-                bot.reply_to(
-                    message,
-                    text=f"{name_account} has been downloaded {download_count[count]} times",
-                    reply_markup=keyboard,
-                )
-
-            else:
-                not_none_check.append(name_account)
-
-    if len(not_none_check) == len(insta_acs):
+    api_response_stored_accounts = get_accounts_and_download_count(
+        chat_id, select_column
+    )
+    if not api_response_stored_accounts:
         bot.reply_to(message, text=f"make sure that you are save {select_column}")
+    else:
+        not_none_check = []
+
+        for account in api_response_stored_accounts:
+            keyboard = types.InlineKeyboardMarkup()
+            btn_to_download = types.InlineKeyboardButton(
+                text=dict(account)["profiles_column"], callback_data=callback_data
+            )
+            keyboard.add(btn_to_download)
+            bot.reply_to(
+                message,
+                text=f"{dict(account)['profiles_column']} has been downloaded {dict(account)['download_count']} times",
+                reply_markup=keyboard,
+            )
 
 
 @bot.message_handler(func=lambda message: True)
@@ -94,12 +85,11 @@ def main(message):
 def callback_quer(call):
     chat_id = call.from_user.id
     if call.data == "video":
-        res = video_downloader(text_url, bestvideo, "youtube")
-        sending_file(res, chat_id)
-
+        key_name = "best"
+        youtube_downloader(chat_id, key_name, text_url)
     elif call.data == "audio":
-        res = video_downloader(text_url, "bestaudio", "youtube", bot)
-        sending_file(res, chat_id, bot)
+        key_name = "bestaudio"
+        youtube_downloader(chat_id, key_name, text_url)
     elif call.data == "stories":
         instaling_and_sending_instagram_profiles(chat_id, "instagram", call)
     elif call.data == "TT_profile":
@@ -115,7 +105,7 @@ def callback_quer(call):
             chat_id, text_name, "../django_server/django_ggrksok/media/tt_profile"
         )
 
-        i = insert_account_in_database_if_not_exists(chat_id, text_name, tt_acs)
+        i = stored_profiles_for_user_in_db(chat_id, text_name, tt_acs)
     elif call.data == "TT":
         res = video_downloader(text_url, best, "tiktok")
         # video_response(chat_id, res, "media/tiktok")

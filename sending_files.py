@@ -11,17 +11,13 @@ bot = telebot.TeleBot("1960290392:AAGWTVdvgqrmRxGbZITJ2RkBD5dpIvL4nO8", parse_mo
 
 
 def video_downloader(url: str, query_format, folder):
-    ydl_opts = {
-        "format": query_format,
-        "outtmpl": f"../django_server/django_ggrksok/media/{folder}/%(id)s.%(ext)s",
-        "noplaylist": True,
-        "extract-audio": True,
-    }
+    ydl_opts = {}
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info_dict = ydl.extract_info(url, download=True)
+        info_dict = ydl.extract_info(url, download=False)
         video_id = info_dict.get("id")
         video_ext = info_dict.get("ext")
-    file_response = f"{video_id}.{video_ext}"
+    # file_response = f"{video_id}.{video_ext}"
+    file_response = f"{video_id}.mp4"
     return file_response
 
 

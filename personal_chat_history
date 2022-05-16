@@ -21,21 +21,21 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: user_table; Type: TABLE; Schema: public; Owner: www
+-- Name: user_table; Type: TABLE; Schema: public; Owner: gosha
 --
 
 CREATE TABLE public.user_table (
-    chat_id integer,
+    chat_id integer NOT NULL,
     tt_accounts character varying,
     insta_accounts character varying,
-    download_count integer DEFAULT 1
+    download_count integer NOT NULL DEFAULT 1
 );
 
 
-ALTER TABLE public.user_table OWNER TO www;
+ALTER TABLE public.user_table OWNER TO gosha;
 
 --
--- Data for Name: user_table; Type: TABLE DATA; Schema: public; Owner: www
+-- Data for Name: user_table; Type: TABLE DATA; Schema: public; Owner: gosha
 --
 
 COPY public.user_table (chat_id, tt_accounts, insta_accounts, download_count) FROM stdin;
