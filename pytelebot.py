@@ -14,7 +14,7 @@ from insta_download import instaling_and_sending_instagram_profiles
 
 from sending_files import sending_file, video_downloader, send_files_to_telegram
 
-bot = telebot.TeleBot("1960290392:AAGWTVdvgqrmRxGbZITJ2RkBD5dpIvL4nO8", parse_mode=None)
+bot = telebot.TeleBot(BotToken, parse_mode=None)
 
 bestvideo = "best[height<=1080]"
 best = "best"
